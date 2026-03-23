@@ -1,6 +1,7 @@
 import { VACANCIES_PER_PAGE } from "@/consts/api";
 import { IVacancy, IVacancyResponse } from "@/types/api.types";
 import { create } from "zustand";
+import { IFilterStore } from "./useFilterStore";
 
 interface JobStore {
     query: string;
@@ -12,7 +13,7 @@ interface JobStore {
     vacancies: IVacancy[];
     isLoading: boolean;
     error: string | null;
-    fetchVacancies: (query: string) => Promise<void>;
+    fetchVacancies: (filters?: IFilterStore) => Promise<void>;
     initVacancies: () => Promise<void>;
     keywords: string[];
     setKeywords: (keywords: string[]) => void;
@@ -42,16 +43,39 @@ export const useJobStore = create<JobStore>((set, get) => ({
         "GraphQL",
     ],
     setKeywords: (keywords) => set({ keywords }),
-    fetchVacancies: async () => {
+    fetchVacancies: async (filters) => {
         const store = get();
         if (!store.query.trim()) return;
         set((prev) => ({ isLoading: true, error: null, query: prev.query }));
         try {
-            const res = await fetch(
-                `/api/hh/vacancies?text=${encodeURIComponent(store.query)}&per_page=${VACANCIES_PER_PAGE}&page=${store.page}`,
+            const params = new URLSearchParams();
+            params.append("text", store.query);
+
+            filters?.experience.forEach((exp) =>
+                params.append("experience", exp),
             );
+            filters?.workFormat.forEach((format) => {
+                const map: Record<string, string> = {
+                    HYBRID: "hybrid",
+                    REMOTE: "remote",
+                    ON_SITE: "on_site",
+                };
+                params.append("work_format", map[format].toUpperCase());
+            });
+
+            if (filters?.salary) {
+                params.append("salary", filters.salary[0].toString());
+            }
+
+            params.append("page", store.page.toString());
+            params.append("per_page", "50");
+
+            const res = await fetch(`/api/hh/vacancies?${params.toString()}`);
+
             if (!res.ok) throw new Error("Failed to fetch");
+
             const data = (await res.json()) as IVacancyResponse;
+
             set({
                 vacancies: data.items ?? [],
                 isLoading: false,

@@ -7,6 +7,9 @@ import { useEffect } from "react";
 import { Input } from "./ui/input";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 import { Briefcase, InfoIcon, MapPin, User } from "lucide-react";
+import JobCard from "./JobCard";
+import JobFilters from "./JobFilters";
+import { useFilterStore } from "@/stores/useFilterStore";
 
 export default function MarketDiscovery() {
     const {
@@ -19,16 +22,17 @@ export default function MarketDiscovery() {
         setQuery,
         setPage,
     } = useJobStore();
+    const filters = useFilterStore();
     const params = useSearchParams();
 
     useEffect(() => {
         const clear = setTimeout(async () => {
             const page = params.get("page") ?? 0;
             setPage(+page);
-            await fetchVacancies(query);
+            await fetchVacancies(filters);
         }, 300);
         return () => clearTimeout(clear);
-    }, [params, hasMorePages, query, setPage, fetchVacancies]);
+    }, [params, hasMorePages, query, setPage, fetchVacancies, filters]);
 
     return (
         <div className="w-full h-full flex flex-col">
@@ -47,7 +51,7 @@ export default function MarketDiscovery() {
                     position mapping.
                 </h2>
             </div>
-            <div className="flex border border-secondary bg-card p-2 rounded-[8px] gap-2 mt-6 mb-10">
+            <div className="flex items-center border border-secondary bg-card p-2 rounded-[8px] gap-2 mt-6 mb-10">
                 <InputGroup className="rounded-[4px] py-4 h-12 bg-secondary">
                     <InputGroupAddon align="inline-start">
                         <Briefcase />
@@ -72,12 +76,13 @@ export default function MarketDiscovery() {
                         className="placeholder:text-md"
                     />
                 </InputGroup>
+                <JobFilters />
             </div>
             <div className="flex flex-col items-start gap-2">
                 {vacancies &&
                     vacancies.length > 0 &&
                     vacancies.map((vacancy) => (
-                        <div key={vacancy.id}>{vacancy.name}</div>
+                        <JobCard vacancy={vacancy} key={vacancy.id} />
                     ))}
                 {!hasMorePages && (
                     <p className="text-secondary text-center">
