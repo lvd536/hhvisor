@@ -1,3 +1,4 @@
+import { IVacancyResponse } from "@/types/api.types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
         }
 
         const data = await response.json();
-        return NextResponse.json(data);
+        return NextResponse.json(data as IVacancyResponse);
     } catch {
         return NextResponse.json(
             { error: "Internal Server Error" },

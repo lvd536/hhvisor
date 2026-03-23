@@ -10,13 +10,6 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "./pagination";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "./select";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -31,18 +24,6 @@ export interface PaginationWithLinksProps {
     pageSearchParam?: string;
 }
 
-/**
- * Navigate with Nextjs links (need to update your own `pagination.tsx` to use Nextjs Link)
- *
- * @example
- * ```
- * <PaginationWithLinks
-    page={1}
-    pageSize={20}
-    totalCount={500}
-  />
- * ```
- */
 export function PaginationWithLinks({
     pageSizeSelectOptions,
     pageSize,
@@ -59,52 +40,47 @@ export function PaginationWithLinks({
     const buildLink = useCallback(
         (newPage: number) => {
             const key = pageSearchParam || "page";
-            if (!searchParams) return `${pathname}?${key}=${newPage}`;
-            const newSearchParams = new URLSearchParams(searchParams);
+            const newSearchParams = new URLSearchParams(
+                searchParams?.toString(),
+            );
             newSearchParams.set(key, String(newPage));
             return `${pathname}?${newSearchParams.toString()}`;
         },
         [searchParams, pathname, pageSearchParam],
     );
 
-    const navToPageSize = useCallback(
-        (newPageSize: number) => {
-            const key =
-                pageSizeSelectOptions?.pageSizeSearchParam || "pageSize";
-            const newSearchParams = new URLSearchParams(
-                searchParams || undefined,
-            );
-            newSearchParams.set(key, String(newPageSize));
-            router.push(`${pathname}?${newSearchParams.toString()}`);
+    const goToPage = useCallback(
+        (newPage: number) => {
+            router.replace(buildLink(newPage), { scroll: false });
         },
-        [searchParams, pathname, pageSizeSelectOptions, router],
+        [router, buildLink],
     );
 
     const renderPageNumbers = () => {
         const items: ReactNode[] = [];
         const maxVisiblePages = 5;
 
+        const addPage = (p: number) => (
+            <PaginationItem key={p}>
+                <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(p);
+                    }}
+                    isActive={page === p}
+                >
+                    {p}
+                </PaginationLink>
+            </PaginationItem>
+        );
+
         if (totalPageCount <= maxVisiblePages) {
             for (let i = 1; i <= totalPageCount; i++) {
-                items.push(
-                    <PaginationItem key={i}>
-                        <PaginationLink
-                            href={buildLink(i)}
-                            isActive={page === i}
-                        >
-                            {i}
-                        </PaginationLink>
-                    </PaginationItem>,
-                );
+                items.push(addPage(i));
             }
         } else {
-            items.push(
-                <PaginationItem key={1}>
-                    <PaginationLink href={buildLink(1)} isActive={page === 1}>
-                        1
-                    </PaginationLink>
-                </PaginationItem>,
-            );
+            items.push(addPage(1));
 
             if (page > 3) {
                 items.push(
@@ -118,16 +94,7 @@ export function PaginationWithLinks({
             const end = Math.min(totalPageCount - 1, page + 1);
 
             for (let i = start; i <= end; i++) {
-                items.push(
-                    <PaginationItem key={i}>
-                        <PaginationLink
-                            href={buildLink(i)}
-                            isActive={page === i}
-                        >
-                            {i}
-                        </PaginationLink>
-                    </PaginationItem>,
-                );
+                items.push(addPage(i));
             }
 
             if (page < totalPageCount - 2) {
@@ -138,16 +105,7 @@ export function PaginationWithLinks({
                 );
             }
 
-            items.push(
-                <PaginationItem key={totalPageCount}>
-                    <PaginationLink
-                        href={buildLink(totalPageCount)}
-                        isActive={page === totalPageCount}
-                    >
-                        {totalPageCount}
-                    </PaginationLink>
-                </PaginationItem>,
-            );
+            items.push(addPage(totalPageCount));
         }
 
         return items;
@@ -155,22 +113,17 @@ export function PaginationWithLinks({
 
     return (
         <div className="flex flex-col md:flex-row items-center gap-3 w-full">
-            {pageSizeSelectOptions && (
-                <div className="flex flex-col gap-4 flex-1">
-                    <SelectRowsPerPage
-                        options={pageSizeSelectOptions.pageSizeOptions}
-                        setPageSize={navToPageSize}
-                        pageSize={pageSize}
-                    />
-                </div>
-            )}
             <Pagination
                 className={cn({ "md:justify-end": pageSizeSelectOptions })}
             >
                 <PaginationContent className="max-sm:gap-0">
                     <PaginationItem>
                         <PaginationPrevious
-                            href={buildLink(Math.max(page - 1, 1))}
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (page > 1) goToPage(page - 1);
+                            }}
                             aria-disabled={page === 1}
                             tabIndex={page === 1 ? -1 : undefined}
                             className={
@@ -180,10 +133,16 @@ export function PaginationWithLinks({
                             }
                         />
                     </PaginationItem>
+
                     {renderPageNumbers()}
+
                     <PaginationItem>
                         <PaginationNext
-                            href={buildLink(Math.min(page + 1, totalPageCount))}
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (page < totalPageCount) goToPage(page + 1);
+                            }}
                             aria-disabled={page === totalPageCount}
                             tabIndex={page === totalPageCount ? -1 : undefined}
                             className={
@@ -195,40 +154,6 @@ export function PaginationWithLinks({
                     </PaginationItem>
                 </PaginationContent>
             </Pagination>
-        </div>
-    );
-}
-
-function SelectRowsPerPage({
-    options,
-    setPageSize,
-    pageSize,
-}: {
-    options: number[];
-    setPageSize: (newSize: number) => void;
-    pageSize: number;
-}) {
-    return (
-        <div className="flex items-center gap-4">
-            <span className="whitespace-nowrap text-sm">Rows per page</span>
-
-            <Select
-                value={String(pageSize)}
-                onValueChange={(value) => setPageSize(Number(value))}
-            >
-                <SelectTrigger>
-                    <SelectValue placeholder="Select page size">
-                        {String(pageSize)}
-                    </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                    {options.map((option) => (
-                        <SelectItem key={option} value={String(option)}>
-                            {option}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
         </div>
     );
 }

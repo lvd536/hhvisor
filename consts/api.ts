@@ -1,0 +1,1 @@
+export const VACANCIES_PER_PAGE = 50;

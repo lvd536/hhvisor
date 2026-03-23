@@ -7,10 +7,14 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import MarketDiscovery from "@/components/MarketDiscovery";
 
 export default function Home() {
     return (
-        <Tabs defaultValue="home" className="flex flex-col items-center">
+        <Tabs
+            defaultValue="home"
+            className="flex flex-col items-center container mx-auto"
+        >
             <TabsList
                 variant="line"
                 className="w-full grid grid-cols-2 md:grid-cols-3 md:px-10 min-h-10 mb-2 nav-shadow"
@@ -22,20 +26,6 @@ export default function Home() {
                     <TabsTrigger value="saved">Saved</TabsTrigger>
                 </div>
             </TabsList>
-            <TabsContent value="overview">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Overview</CardTitle>
-                        <CardDescription>
-                            View your key metrics and recent project activity.
-                            Track progress across all your active projects.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="text-sm text-muted-foreground">
-                        You have 12 active projects and 3 pending tasks.
-                    </CardContent>
-                </Card>
-            </TabsContent>
             <TabsContent value="analytics">
                 <Card>
                     <CardHeader>
@@ -50,19 +40,8 @@ export default function Home() {
                     </CardContent>
                 </Card>
             </TabsContent>
-            <TabsContent value="home">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Home</CardTitle>
-                        <CardDescription>
-                            Generate and download your detailed reports. Export
-                            data in multiple formats for analysis.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="text-sm text-muted-foreground">
-                        You have 5 reports ready and available to export.
-                    </CardContent>
-                </Card>
+            <TabsContent value="home" className="w-full container">
+                <MarketDiscovery />
             </TabsContent>
             <TabsContent value="saved">
                 <Card>
