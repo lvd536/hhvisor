@@ -36,77 +36,77 @@ export interface IVacancy {
         to: number | null;
         currency: string;
         gross: boolean;
-        mode: {
-            id: string;
-            name: string;
-        };
-        frequency: string | null;
-        type: {
-            id: string;
-            name: string;
-        };
-        address: string | null;
-        response_url: string | null;
-        sort_point_distance: string | null;
-        published_at: Date;
-        created_at: Date;
-        archived: boolean;
-        apply_alternate_url: string;
-        show_logo_in_search: boolean;
-        show_contacts: boolean;
-        url: string;
-        alternate_url: string;
-        relations: string[];
-        employer: {
-            id: string;
-            name: string;
-            url: string;
-        };
-        snippet: {
-            requirement: string | null;
-            responsibility: string | null;
-        };
-        contacts: null | string | string[];
-        schedule: {
-            id: string;
-            name: string;
-        };
-        work_format: {
-            id: string;
-            name: string;
-        }[];
-        working_hours: {
-            id: string;
-            name: string;
-        }[];
-        work_schedule_by_days: {
-            id: string;
-            name: string;
-        }[];
-        accept_labor_contract: boolean;
-        night_shifts: boolean;
-        professional_roles: {
-            id: string;
-            name: string;
-        }[];
-        accept_incomplete_resumes: boolean;
-        experience: {
-            id: string;
-            name: string;
-        };
-        employment: {
-            id: string;
-            name: string;
-        };
-        employment_form: {
-            id: string;
-            name: string;
-        };
-        internship: boolean;
-        adv_response_url: string | null;
-        is_adv_vacancy: boolean;
-        adv_context: string | null;
     };
+    mode: {
+        id: string;
+        name: string;
+    };
+    frequency: string | null;
+    type: {
+        id: string;
+        name: string;
+    };
+    address: string | null;
+    response_url: string | null;
+    sort_point_distance: string | null;
+    published_at: Date;
+    created_at: Date;
+    archived: boolean;
+    apply_alternate_url: string;
+    show_logo_in_search: boolean;
+    show_contacts: boolean;
+    url: string;
+    alternate_url: string;
+    relations: string[];
+    employer: {
+        id: string;
+        name: string;
+        url: string;
+    };
+    snippet: {
+        requirement: string | null;
+        responsibility: string | null;
+    };
+    contacts: null | string | string[];
+    schedule: {
+        id: string;
+        name: string;
+    };
+    work_format: {
+        id: string;
+        name: string;
+    }[];
+    working_hours: {
+        id: string;
+        name: string;
+    }[];
+    work_schedule_by_days: {
+        id: string;
+        name: string;
+    }[];
+    accept_labor_contract: boolean;
+    night_shifts: boolean;
+    professional_roles: {
+        id: string;
+        name: string;
+    }[];
+    accept_incomplete_resumes: boolean;
+    experience: {
+        id: string;
+        name: string;
+    };
+    employment: {
+        id: string;
+        name: string;
+    };
+    employment_form: {
+        id: string;
+        name: string;
+    };
+    internship: boolean;
+    adv_response_url: string | null;
+    is_adv_vacancy: boolean;
+    adv_context: string | null;
 }
 export interface IArea {
     id: string;
