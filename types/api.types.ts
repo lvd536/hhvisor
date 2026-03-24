@@ -112,9 +112,9 @@ export interface IArea {
     id: string;
     parent_id: string | null;
     name: string;
-    utc_offset: string;
-    lat: string;
-    lng: string;
+    utc_offset?: string;
+    lat: number;
+    lng: number;
     areas: IArea[];
 }
 

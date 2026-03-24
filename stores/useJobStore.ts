@@ -13,7 +13,10 @@ interface JobStore {
     vacancies: IVacancy[];
     isLoading: boolean;
     error: string | null;
-    fetchVacancies: (filters?: IFilterStore) => Promise<void>;
+    fetchVacancies: (
+        area: number | null,
+        filters?: IFilterStore,
+    ) => Promise<void>;
     initVacancies: () => Promise<void>;
     keywords: string[];
     setKeywords: (keywords: string[]) => void;
@@ -43,9 +46,8 @@ export const useJobStore = create<JobStore>((set, get) => ({
         "GraphQL",
     ],
     setKeywords: (keywords) => set({ keywords }),
-    fetchVacancies: async (filters) => {
+    fetchVacancies: async (area, filters) => {
         const store = get();
-        if (!store.query.trim()) return;
         set((prev) => ({ isLoading: true, error: null, query: prev.query }));
         try {
             const params = new URLSearchParams();
@@ -65,6 +67,10 @@ export const useJobStore = create<JobStore>((set, get) => ({
 
             if (filters?.salary) {
                 params.append("salary", filters.salary[0].toString());
+            }
+
+            if (area) {
+                params.append("area", area.toString());
             }
 
             params.append("page", store.page.toString());

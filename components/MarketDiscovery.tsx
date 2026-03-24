@@ -11,6 +11,17 @@ import JobCard from "./JobCard";
 import JobFilters from "./JobFilters";
 import { useFilterStore } from "@/stores/useFilterStore";
 
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useAreaStore } from "@/stores/useAreaStore";
+
 export default function MarketDiscovery() {
     const {
         hasMorePages,
@@ -23,16 +34,25 @@ export default function MarketDiscovery() {
         setPage,
     } = useJobStore();
     const filters = useFilterStore();
+    const { areas, currentArea, setCurrentArea } = useAreaStore();
     const params = useSearchParams();
 
     useEffect(() => {
         const clear = setTimeout(async () => {
             const page = params.get("page") ?? 0;
             setPage(+page);
-            await fetchVacancies(filters);
+            await fetchVacancies(currentArea, filters);
         }, 300);
         return () => clearTimeout(clear);
-    }, [params, hasMorePages, query, setPage, fetchVacancies, filters]);
+    }, [
+        params,
+        hasMorePages,
+        query,
+        setPage,
+        fetchVacancies,
+        filters,
+        currentArea,
+    ]);
 
     return (
         <div className="w-full h-full flex flex-col">
@@ -64,18 +84,30 @@ export default function MarketDiscovery() {
                         className="placeholder:text-md"
                     />
                 </InputGroup>
-                <InputGroup className="rounded-[4px] py-4 h-12 bg-secondary">
-                    <InputGroupAddon align="inline-start">
-                        <MapPin />
-                    </InputGroupAddon>
-                    <InputGroupInput
-                        type="search"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Location"
-                        className="placeholder:text-md"
-                    />
-                </InputGroup>
+                <Select onValueChange={(e) => setCurrentArea(+e)}>
+                    <SelectTrigger className="w-1/5 rounded-[4px] py-4 min-h-12 bg-secondary">
+                        <SelectValue placeholder="Select area" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="null">None</SelectItem>
+                        {areas.map((area) => (
+                            <SelectGroup key={area.id}>
+                                <SelectLabel>{area.name}</SelectLabel>
+                                <SelectItem value={area.id}>
+                                    {area.name}
+                                </SelectItem>
+                                {area.areas.map((secondArea) => (
+                                    <SelectItem
+                                        value={secondArea.id}
+                                        key={secondArea.id}
+                                    >
+                                        {secondArea.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectGroup>
+                        ))}
+                    </SelectContent>
+                </Select>
                 <JobFilters />
             </div>
             <div className="flex flex-col items-start gap-2">
