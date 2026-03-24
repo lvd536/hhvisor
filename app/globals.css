@@ -198,3 +198,6 @@
 .nav-shadow {
     box-shadow: 0 20px 40px -10px rgba(17, 105, 255, 0.08);
 }
+.vacancy-credits-shadow {
+    box-shadow: 0 4px 6px -4px rgba(59, 130, 246, 0.2), 0 10px 15px -3px rgba(59, 130, 246, 0.2);
+}
