@@ -1,3 +1,4 @@
+import { getPublishedAt } from "@/lib/utils";
 import { IVacancy } from "@/types/api.types";
 import { Banknote, Building2, Clock } from "lucide-react";
 
@@ -6,36 +7,6 @@ interface IProps {
 }
 
 export default function JobCard({ vacancy }: IProps) {
-    function getPublishedAt(createdAt: Date | number) {
-        const start = new Date(createdAt);
-        const end = new Date();
-
-        let years = end.getFullYear() - start.getFullYear();
-        let months = end.getMonth() - start.getMonth();
-        let days = end.getDate() - start.getDate();
-
-        if (days < 0) {
-            months--;
-            const lastMonth = new Date(end.getFullYear(), end.getMonth(), 0);
-            days += lastMonth.getDate();
-        }
-
-        if (months < 0) {
-            years--;
-            months += 12;
-        }
-
-        const diffInMs = end.getTime() - start.getTime();
-
-        const hours = Math.floor(diffInMs / (1000 * 60 * 60)) % 24;
-
-        let result = "Published ";
-        if (years) result += `${years}y `;
-        if (months) result += `${months}m `;
-        if (days) result += `${days}d `;
-        if (hours) result += hours > 0 ? `${hours}h ` : "few minutes";
-        return `${result} ago`;
-    }
     return (
         <div className="flex justify-between w-full min-h-51 bg-card rounded-[8px] p-8">
             <div className="flex flex-col gap-2">
@@ -111,9 +82,12 @@ export default function JobCard({ vacancy }: IProps) {
                 </div>
             </div>
             <div className="flex flex-col items-start justify-center gap-3">
-                <button className="rounded-sm w-16 md:w-32 py-3 bg-primary">
+                <a
+                    href={`/vacancy/${vacancy.id}`}
+                    className="text-center rounded-sm w-16 md:w-32 py-3 bg-primary"
+                >
                     Analyze
-                </button>
+                </a>
                 <button className="rounded-sm w-16 md:w-32 py-3 bg-secondary">
                     Save
                 </button>
