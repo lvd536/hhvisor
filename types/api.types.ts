@@ -58,11 +58,7 @@ export interface IVacancy {
     url: string;
     alternate_url: string;
     relations: string[];
-    employer: {
-        id: string;
-        name: string;
-        url: string;
-    };
+    employer: Employer;
     snippet: {
         requirement: string | null;
         responsibility: string | null;
@@ -137,4 +133,52 @@ interface ICluster {
         | "salary_frequency"
         | "driver_license_types";
     items: { name: string; url: string; count: number }[];
+}
+
+export interface IDetailedVacancy extends Omit<IVacancy, "address"> {
+    address: {
+        city?: string | null;
+        street?: string | null;
+        building?: string | null;
+        lat: number | null;
+        lng: number | null;
+        description?: string | null;
+        raw?: string | null;
+        metro?: IMetro;
+        metro_stations?: IMetro[];
+    };
+    allow_messages: boolean;
+    description?: string | null;
+    key_skills: { name: string }[];
+}
+
+interface IMetro {
+    station_name?: string | null;
+    line_name?: string | null;
+    station_id?: string | null;
+    line_id?: string | null;
+    lat: number | null;
+    lng: number | null;
+}
+
+interface Employer {
+    id: string;
+    name: string;
+    url: string;
+    logo_urls?: {
+        90?: string;
+        240?: string;
+        original?: string;
+    };
+}
+
+export interface IDetailedEmployer extends Employer {
+    accredited_it_employer: boolean;
+    alternate_url: string;
+    description: string | null;
+    open_vacancies: number | null;
+    trusted: boolean;
+    is_identified_by_esia: boolean;
+    industries: { id: string; name: string }[];
+    site_url: string | null;
 }
