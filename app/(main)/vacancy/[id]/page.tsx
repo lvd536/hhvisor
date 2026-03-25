@@ -1,4 +1,4 @@
-import { getPublishedAt } from "@/lib/utils";
+import { getPublishedAt } from "@/utils/date";
 import { IDetailedEmployer, IDetailedVacancy } from "@/types/api.types";
 import { CheckCircle, Banknote, Building2, Clock } from "lucide-react";
 import { headers } from "next/headers";

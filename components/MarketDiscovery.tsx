@@ -90,22 +90,24 @@ export default function MarketDiscovery() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="null">None</SelectItem>
-                        {areas.map((area) => (
-                            <SelectGroup key={area.id}>
-                                <SelectLabel>{area.name}</SelectLabel>
-                                <SelectItem value={area.id}>
-                                    {area.name}
-                                </SelectItem>
-                                {area.areas.map((secondArea) => (
-                                    <SelectItem
-                                        value={secondArea.id}
-                                        key={secondArea.id}
-                                    >
-                                        {secondArea.name}
+                        {areas &&
+                            areas.length > 0 &&
+                            areas.map((area) => (
+                                <SelectGroup key={area.id}>
+                                    <SelectLabel>{area.name}</SelectLabel>
+                                    <SelectItem value={area.id}>
+                                        {area.name}
                                     </SelectItem>
-                                ))}
-                            </SelectGroup>
-                        ))}
+                                    {area.areas.map((secondArea) => (
+                                        <SelectItem
+                                            value={secondArea.id}
+                                            key={secondArea.id}
+                                        >
+                                            {secondArea.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            ))}
                     </SelectContent>
                 </Select>
                 <JobFilters />

@@ -2,6 +2,7 @@ import { VACANCIES_PER_PAGE } from "@/consts/api";
 import { IVacancy, IVacancyResponse } from "@/types/api.types";
 import { create } from "zustand";
 import { IFilterStore } from "./useFilterStore";
+import { getMonthDaysRanges } from "@/utils/date";
 
 interface JobStore {
     query: string;
@@ -20,6 +21,13 @@ interface JobStore {
     initVacancies: () => Promise<void>;
     keywords: string[];
     setKeywords: (keywords: string[]) => void;
+    getSalaryTrends: (
+        area: number | null,
+        filters?: IFilterStore,
+    ) => Promise<Array<{
+        name: string;
+        salary: number;
+    }> | null>;
 }
 
 export const useJobStore = create<JobStore>((set, get) => ({
@@ -115,4 +123,108 @@ export const useJobStore = create<JobStore>((set, get) => ({
         }
     },
     setPage: (page) => set({ page }),
+    getSalaryTrends: async (area, filters) => {
+        const store = get();
+        set({ isLoading: true, error: null });
+
+        const result: Array<{ name: string; salary: number }> = [];
+        const ranges = getMonthDaysRanges();
+
+        const params = new URLSearchParams();
+
+        const query = store.query.trim();
+        if (query) {
+            params.append("text", query);
+        }
+
+        if (area) {
+            params.append("area", area.toString());
+        }
+
+        filters?.experience.forEach((exp) => {
+            params.append("experience", exp);
+        });
+
+        filters?.workFormat.forEach((format) => {
+            const map: Record<string, string> = {
+                HYBRID: "HYBRID",
+                REMOTE: "REMOTE",
+                ON_SITE: "ON_SITE",
+            };
+            params.append("work_format", map[format]);
+        });
+
+        params.append("per_page", "100");
+        params.append("date_from", ranges.from);
+        params.append("date_to", ranges.to);
+        params.append("only_with_salary", "true");
+
+        const firstUrl = `/api/hh/vacancies?${params.toString()}`;
+        const firstRes = await fetch(firstUrl);
+        const firstData = (await firstRes.json()) as IVacancyResponse;
+
+        const allItems = [...(firstData.items ?? [])];
+        const totalPages = firstData.pages ?? 1;
+
+        const pageRequests = Array.from(
+            { length: totalPages - 1 },
+            (_, idx) => {
+                const page = idx + 1;
+                const p = new URLSearchParams(params);
+                p.set("page", page.toString());
+                return fetch(`/api/hh/vacancies?${p.toString()}`).then(
+                    async (res) => (await res.json()) as IVacancyResponse,
+                );
+            },
+        );
+
+        const restPages = await Promise.all(pageRequests);
+
+        for (const pageData of restPages) {
+            allItems.push(...(pageData.items ?? []));
+        }
+
+        for (let day = 1; day <= ranges.daysInMonth; day++) {
+            const dayItems = allItems.filter((item) => {
+                const created = new Date(item.created_at);
+                return created.getDate() === day;
+            });
+
+            result.push({
+                name: day.toString(),
+                salary: getAverageSalary(dayItems),
+            });
+        }
+
+        set({ isLoading: false });
+        return result;
+    },
 }));
+
+function getSalaryValue(salary: IVacancy["salary"]): number | null {
+    if (!salary) return null;
+
+    const { from, to } = salary;
+
+    if (from && to) return (from + to) / 2;
+    if (from) return from;
+    if (to) return to;
+
+    return null;
+}
+
+function getAverageSalary(items: IVacancyResponse["items"]): number {
+    let sum = 0;
+    let count = 0;
+
+    for (const i of items) {
+        const value = getSalaryValue(i.salary);
+
+        if (value) {
+            sum += value;
+            count++;
+        }
+    }
+
+    return count ? sum / count : 0;
+}

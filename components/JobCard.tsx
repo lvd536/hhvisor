@@ -1,4 +1,4 @@
-import { getPublishedAt } from "@/lib/utils";
+import { getPublishedAt } from "@/utils/date";
 import { IVacancy } from "@/types/api.types";
 import { Banknote, Building2, Clock } from "lucide-react";
 

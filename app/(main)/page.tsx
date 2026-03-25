@@ -8,16 +8,14 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import MarketDiscovery from "@/components/MarketDiscovery";
+import Analytics from "@/components/Analytics";
 
 export default function Home() {
     return (
-        <Tabs
-            defaultValue="home"
-            className="flex flex-col items-center container mx-auto"
-        >
+        <Tabs defaultValue="home" className="flex flex-col items-center">
             <TabsList
                 variant="line"
-                className="w-full grid grid-cols-2 md:grid-cols-3 md:px-10 min-h-10 mb-2 nav-shadow"
+                className="w-full grid grid-cols-2 md:grid-cols-3 md:px-10 min-h-10 nav-shadow container mx-auto bg-background z-99"
             >
                 <p className="font-black text-xl w-fit">HH Visor</p>
                 <div className="flex gap-2">
@@ -26,8 +24,8 @@ export default function Home() {
                     <TabsTrigger value="saved">Saved</TabsTrigger>
                 </div>
             </TabsList>
-            <TabsContent value="analytics">
-                <Card>
+            <TabsContent value="analytics" className="w-full">
+                {/*<Card>
                     <CardHeader>
                         <CardTitle>Analytics</CardTitle>
                         <CardDescription>
@@ -38,7 +36,8 @@ export default function Home() {
                     <CardContent className="text-sm text-muted-foreground">
                         Page views are up 25% compared to last month.
                     </CardContent>
-                </Card>
+                </Card>*/}
+                <Analytics />
             </TabsContent>
             <TabsContent value="home" className="w-full container">
                 <MarketDiscovery />
