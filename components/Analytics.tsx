@@ -18,15 +18,14 @@ import SalaryTrendsChart from "./SalaryTrendsChart";
 import { useJobStore } from "@/stores/useJobStore";
 import { useFilterStore } from "@/stores/useFilterStore";
 import { useAreaStore } from "@/stores/useAreaStore";
+import { KeyWordType, OverviewAnalyticsType } from "@/types/stores.types";
 
 const Analytics = () => {
-    const [salaryTrendsData, setSalaryTrendsData] = useState<Array<{
-        name: string;
-        salary: number;
-    }> | null>(null);
+    const [overviewAnalytics, setOverviewAnalytics] =
+        useState<OverviewAnalyticsType | null>(null);
     const [hash, setHash] = useState("");
 
-    const { getSalaryTrends } = useJobStore();
+    const { getOverviewAnalytics } = useJobStore();
     const filters = useFilterStore();
     const { currentArea } = useAreaStore();
 
@@ -43,12 +42,12 @@ const Analytics = () => {
 
     useEffect(() => {
         (async () => {
-            const res = await getSalaryTrends(currentArea, filters);
+            const res = await getOverviewAnalytics(currentArea, filters);
             if (!res) return;
             console.log(res);
-            setSalaryTrendsData(res);
+            setOverviewAnalytics(res);
         })();
-    }, [getSalaryTrends, currentArea, filters]);
+    }, [getOverviewAnalytics, currentArea, filters]);
 
     return (
         <div className="flex min-h-dvh w-full">
@@ -100,7 +99,11 @@ const Analytics = () => {
                                     Avg Salary
                                 </p>
                                 <p className="font-black tracking-tighter leading-[111%] text-[36px] text-[#60a5fa]">
-                                    $150k
+                                    {overviewAnalytics?.avgSalary
+                                        ? Math.round(
+                                              overviewAnalytics.avgSalary,
+                                          )
+                                        : "Loading..."}
                                 </p>
                             </div>
                             <div className="relative flex flex-col gap-2 max-w-75 items-start justify-start border border-secondary bg-card rounded-[8px] p-8">
@@ -108,7 +111,8 @@ const Analytics = () => {
                                     Jobs Count
                                 </p>
                                 <p className="font-black tracking-tighter leading-[111%] text-[36px] text-[#60a5fa]">
-                                    4,200
+                                    {overviewAnalytics?.jobsCount ||
+                                        "Loading..."}
                                 </p>
                             </div>
                             <div className="relative flex flex-col gap-2 max-w-75 items-start justify-start border border-secondary bg-card rounded-[8px] p-8">
@@ -116,12 +120,14 @@ const Analytics = () => {
                                     Top Skill
                                 </p>
                                 <p className="font-black tracking-tighter leading-[111%] text-[36px] text-[#60a5fa]">
-                                    React
+                                    {overviewAnalytics?.topWord.keyword ||
+                                        "Loading..."}
                                 </p>
                             </div>
                         </div>
                         <div className="w-full md:flex gap-8 mt-12 items-start justify-between">
-                            {salaryTrendsData ? (
+                            {overviewAnalytics &&
+                            overviewAnalytics.salaryTrends ? (
                                 <div className="w-full border border-secondary rounded-[8px] p-8 bg-card">
                                     <p className="tracking-tight font-bold text-[20px]">
                                         Salary Trends over Time
@@ -131,7 +137,7 @@ const Analytics = () => {
                                         metropolitan hubs.
                                     </p>
                                     <SalaryTrendsChart
-                                        data={salaryTrendsData}
+                                        data={overviewAnalytics.salaryTrends}
                                     />
                                 </div>
                             ) : (
@@ -145,70 +151,37 @@ const Analytics = () => {
                                     Top Required Technologies
                                 </p>
                                 <div className="flex flex-col gap-5">
-                                    <div>
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-bold text-[12px] leading-[133%]">
-                                                React
-                                            </p>
-                                            <p className="text-[10px] text-[#60a5fa] leading-normal">
-                                                96%
-                                            </p>
-                                        </div>
-                                        <div className="relative w-full h-1 bg-secondary rounded-full mt-2">
-                                            <div
-                                                className="bg-ring rounded-full h-full"
-                                                style={{ width: `96%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-bold text-[12px] leading-[133%]">
-                                                Python
-                                            </p>
-                                            <p className="text-[10px] text-[#60a5fa] leading-normal">
-                                                57%
-                                            </p>
-                                        </div>
-                                        <div className="relative w-full h-1 bg-secondary rounded-full mt-2">
-                                            <div
-                                                className="bg-ring rounded-full h-full"
-                                                style={{ width: `57%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-bold text-[12px] leading-[133%]">
-                                                TypeScript
-                                            </p>
-                                            <p className="text-[10px] text-[#60a5fa] leading-normal">
-                                                86%
-                                            </p>
-                                        </div>
-                                        <div className="relative w-full h-1 bg-secondary rounded-full mt-2">
-                                            <div
-                                                className="bg-ring rounded-full h-full"
-                                                style={{ width: `86%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-bold text-[12px] leading-[133%]">
-                                                Porno
-                                            </p>
-                                            <p className="text-[10px] text-[#60a5fa] leading-normal">
-                                                10%
-                                            </p>
-                                        </div>
-                                        <div className="relative w-full h-1 bg-secondary rounded-full mt-2">
-                                            <div
-                                                className="bg-ring rounded-full h-full"
-                                                style={{ width: `10%` }}
-                                            />
-                                        </div>
-                                    </div>
+                                    {overviewAnalytics &&
+                                    overviewAnalytics.topWords
+                                        ? overviewAnalytics.topWords.map(
+                                              (word, index) => (
+                                                  <div
+                                                      key={`${word.keyword}-${index}`}
+                                                  >
+                                                      <div className="flex items-center justify-between">
+                                                          <p className="font-bold text-[12px] leading-[133%]">
+                                                              {word.keyword}
+                                                          </p>
+                                                          <p className="text-[10px] text-[#60a5fa] leading-normal">
+                                                              {+word.percentage *
+                                                                  10}
+                                                              %
+                                                          </p>
+                                                      </div>
+                                                      <div className="relative w-full h-1 bg-secondary rounded-full mt-2">
+                                                          <div
+                                                              className="bg-ring rounded-full h-full"
+                                                              style={{
+                                                                  width:
+                                                                      +word.percentage *
+                                                                      10,
+                                                              }}
+                                                          />
+                                                      </div>
+                                                  </div>
+                                              ),
+                                          )
+                                        : "Loading..."}
                                 </div>
                             </div>
                         </div>

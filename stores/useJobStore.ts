@@ -3,6 +3,7 @@ import { IVacancy, IVacancyResponse } from "@/types/api.types";
 import { create } from "zustand";
 import { IFilterStore } from "./useFilterStore";
 import { getMonthDaysRanges } from "@/utils/date";
+import { OverviewAnalyticsType } from "@/types/stores.types";
 
 interface JobStore {
     query: string;
@@ -21,13 +22,10 @@ interface JobStore {
     initVacancies: () => Promise<void>;
     keywords: string[];
     setKeywords: (keywords: string[]) => void;
-    getSalaryTrends: (
+    getOverviewAnalytics: (
         area: number | null,
         filters?: IFilterStore,
-    ) => Promise<Array<{
-        name: string;
-        salary: number;
-    }> | null>;
+    ) => Promise<OverviewAnalyticsType>;
 }
 
 export const useJobStore = create<JobStore>((set, get) => ({
@@ -123,7 +121,7 @@ export const useJobStore = create<JobStore>((set, get) => ({
         }
     },
     setPage: (page) => set({ page }),
-    getSalaryTrends: async (area, filters) => {
+    getOverviewAnalytics: async (area, filters) => {
         const store = get();
         set({ isLoading: true, error: null });
 
@@ -196,8 +194,34 @@ export const useJobStore = create<JobStore>((set, get) => ({
             });
         }
 
+        const stats = store.keywords.map((keyword) => {
+            const regex = new RegExp(`\\b${keyword}\\b`, "i");
+            let count = 0;
+
+            allItems.forEach((job) => {
+                const textToSearch = `${job.name} ${job.snippet?.requirement || ""} ${job.snippet?.responsibility || ""}`;
+                if (regex.test(textToSearch)) {
+                    count++;
+                }
+            });
+
+            return {
+                keyword,
+                count,
+                percentage: ((count / allItems.length) * 100).toFixed(1),
+            };
+        });
+        const vacanciesCount = restPages[0].found;
+        const avgSalary = getAverageSalary(allItems);
+
         set({ isLoading: false });
-        return result;
+        return {
+            salaryTrends: result ?? null,
+            jobsCount: vacanciesCount,
+            topWord: stats.sort((a, b) => b.count - a.count)[0],
+            topWords: stats ?? [],
+            avgSalary,
+        };
     },
 }));
 
