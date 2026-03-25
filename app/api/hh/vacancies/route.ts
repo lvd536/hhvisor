@@ -1,3 +1,4 @@
+import { VACANCIES_PER_PAGE } from "@/consts/api";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -14,7 +15,8 @@ export async function GET(request: NextRequest) {
     hhUrl.searchParams.append("text", text);
     hhUrl.searchParams.append("area", area);
     hhUrl.searchParams.append("page", page);
-    hhUrl.searchParams.append("per_page", "20");
+    hhUrl.searchParams.append("per_page", VACANCIES_PER_PAGE.toString());
+    hhUrl.searchParams.append("clusters", "true");
 
     experiences.forEach((exp) => hhUrl.searchParams.append("experience", exp));
 
