@@ -3,7 +3,10 @@ import { IVacancy, IVacancyResponse } from "@/types/api.types";
 import { create } from "zustand";
 import { IFilterStore } from "./useFilterStore";
 import { getMonthDaysRanges } from "@/utils/date";
-import { OverviewAnalyticsType } from "@/types/stores.types";
+import {
+    KeywordAnalyticsType,
+    OverviewAnalyticsType,
+} from "@/types/stores.types";
 
 interface JobStore {
     query: string;
@@ -26,6 +29,10 @@ interface JobStore {
         area: number | null,
         filters?: IFilterStore,
     ) => Promise<OverviewAnalyticsType>;
+    getKeywordAnalytics: (
+        area: number | null,
+        filters?: IFilterStore,
+    ) => Promise<KeywordAnalyticsType>;
 }
 
 export const useJobStore = create<JobStore>((set, get) => ({
@@ -219,8 +226,106 @@ export const useJobStore = create<JobStore>((set, get) => ({
             salaryTrends: result ?? null,
             jobsCount: vacanciesCount,
             topWord: stats.sort((a, b) => b.count - a.count)[0],
-            topWords: stats ?? [],
+            topWords: stats.sort((a, b) => b.count - a.count) ?? [],
             avgSalary,
+        };
+    },
+    getKeywordAnalytics: async (area, filters) => {
+        const store = get();
+        set({ isLoading: true, error: null });
+
+        const demandVelocity: KeywordAnalyticsType["demandVelocity"] = [];
+        const ranges = getMonthDaysRanges();
+
+        const params = new URLSearchParams();
+
+        const query = store.query.trim();
+        if (query) {
+            params.append("text", query);
+        }
+
+        if (area) {
+            params.append("area", area.toString());
+        }
+
+        filters?.experience.forEach((exp) => {
+            params.append("experience", exp);
+        });
+
+        filters?.workFormat.forEach((format) => {
+            const map: Record<string, string> = {
+                HYBRID: "HYBRID",
+                REMOTE: "REMOTE",
+                ON_SITE: "ON_SITE",
+            };
+            params.append("work_format", map[format]);
+        });
+
+        params.append("per_page", "100");
+        params.append("date_from", ranges.from);
+        params.append("date_to", ranges.to);
+        params.append("only_with_salary", "true");
+
+        const firstUrl = `/api/hh/vacancies?${params.toString()}`;
+        const firstRes = await fetch(firstUrl);
+        const firstData = (await firstRes.json()) as IVacancyResponse;
+
+        const allItems = [...(firstData.items ?? [])];
+        const totalPages = firstData.pages ?? 1;
+
+        const pageRequests = Array.from(
+            { length: totalPages - 1 },
+            (_, idx) => {
+                const page = idx + 1;
+                const p = new URLSearchParams(params);
+                p.set("page", page.toString());
+                return fetch(`/api/hh/vacancies?${p.toString()}`).then(
+                    async (res) => (await res.json()) as IVacancyResponse,
+                );
+            },
+        );
+
+        const restPages = await Promise.all(pageRequests);
+
+        for (const pageData of restPages) {
+            allItems.push(...(pageData.items ?? []));
+        }
+
+        for (let day = 1; day <= ranges.daysInMonth; day++) {
+            const dayItems = allItems.filter((item) => {
+                const created = new Date(item.created_at);
+                return created.getDate() === day;
+            });
+
+            demandVelocity.push({
+                name: day.toString(),
+                vacanciesCount: dayItems.length,
+            });
+        }
+
+        const stats = store.keywords.map((keyword) => {
+            const regex = new RegExp(`\\b${keyword}\\b`, "i");
+            let count = 0;
+
+            allItems.forEach((job) => {
+                const textToSearch = `${job.name} ${job.snippet?.requirement || ""} ${job.snippet?.responsibility || ""}`;
+                if (regex.test(textToSearch)) {
+                    count++;
+                }
+            });
+
+            return {
+                keyword,
+                count,
+                percentage: ((count / allItems.length) * 100).toFixed(1),
+            };
+        });
+
+        set({ isLoading: false });
+        return {
+            demandVelocity: demandVelocity,
+            salaryDistribution: getSalaryDistribution(allItems),
+            topWords: stats.sort((a, b) => b.count - a.count) ?? [],
         };
     },
 }));
@@ -251,4 +356,38 @@ function getAverageSalary(items: IVacancyResponse["items"]): number {
     }
 
     return count ? sum / count : 0;
+}
+
+function getSalaryDistribution(items: IVacancy[]) {
+    const result: KeywordAnalyticsType["salaryDistribution"] = [];
+
+    const targetValues = [0, 30000, 80000, 120000, 160000, 200000, 400000];
+
+    const itemsSalaries = items.map((i) =>
+        i.salary ? i.salary.from || i.salary.to || 0 : 0,
+    );
+
+    targetValues.forEach((value, index, arr) => {
+        if (index !== 0) {
+            const jobsCount = itemsSalaries.reduce(
+                (acc, item) =>
+                    item <= value && item > arr[index - 1] ? acc + 1 : acc,
+                0,
+            );
+            result.push({
+                name: `RUR${value}K`,
+                jobsCount,
+            });
+        } else {
+            const jobsCount = itemsSalaries.reduce(
+                (acc, item) => (item < arr[index + 1] ? acc + 1 : acc),
+                0,
+            );
+            result.push({
+                name: `RUR${value}`,
+                jobsCount,
+            });
+        }
+    });
+    return result;
 }

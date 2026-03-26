@@ -9,6 +9,18 @@ export type OverviewAnalyticsType = {
     avgSalary: number;
 };
 
+export type KeywordAnalyticsType = {
+    salaryDistribution: Array<{
+        name: string;
+        jobsCount: number;
+    }> | null;
+    demandVelocity: Array<{
+        name: string;
+        vacanciesCount: number;
+    }> | null;
+    topWords: KeyWordType[];
+};
+
 export type KeyWordType = {
     keyword: string;
     count: number;

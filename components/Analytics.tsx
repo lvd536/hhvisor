@@ -14,12 +14,13 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useEffect, useState } from "react";
-import SalaryTrendsChart from "./SalaryTrendsChart";
+import SalaryTrendsChart from "./Charts/SalaryTrendsChart";
 import { useJobStore } from "@/stores/useJobStore";
 import { useFilterStore } from "@/stores/useFilterStore";
 import { useAreaStore } from "@/stores/useAreaStore";
 import { KeyWordType, OverviewAnalyticsType } from "@/types/stores.types";
 import Overview from "./Overview";
+import Keyword from "./Keyword";
 
 const Analytics = () => {
     const [overviewAnalytics, setOverviewAnalytics] =
@@ -82,7 +83,7 @@ const Analytics = () => {
                 </Sidebar>
                 <div className="flex flex-1 flex-col">
                     <SidebarTrigger className="[&_svg]:size-5! ml-4 sm:ml-5 rounded-sm" />
-                    {hash === "keyword" ? "keyword" : <Overview />}
+                    {hash === "keyword" ? <Keyword /> : <Overview />}
                 </div>
             </SidebarProvider>
         </div>
