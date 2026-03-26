@@ -163,8 +163,7 @@ const Analytics = () => {
                                                               {word.keyword}
                                                           </p>
                                                           <p className="text-[10px] text-[#60a5fa] leading-normal">
-                                                              {+word.percentage *
-                                                                  10}
+                                                              {+word.percentage}
                                                               %
                                                           </p>
                                                       </div>
@@ -172,9 +171,7 @@ const Analytics = () => {
                                                           <div
                                                               className="bg-ring rounded-full h-full"
                                                               style={{
-                                                                  width:
-                                                                      +word.percentage *
-                                                                      10,
+                                                                  width: +word.percentage,
                                                               }}
                                                           />
                                                       </div>
