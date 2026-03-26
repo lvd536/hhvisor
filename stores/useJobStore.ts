@@ -8,6 +8,39 @@ import {
     OverviewAnalyticsType,
 } from "@/types/stores.types";
 
+const DEFAULT_KEYWORDS = [
+    "React",
+    "Vue",
+    "Angular",
+    "TypeScript",
+    "Node.js",
+    "Next.js",
+    "Tailwind",
+    "Redux",
+    "Zustand",
+    "Docker",
+    "PostgreSQL",
+    "GraphQL",
+] as const;
+
+const WORK_FORMAT_MAP: Record<string, string> = {
+    HYBRID: "hybrid",
+    REMOTE: "remote",
+    ON_SITE: "on_site",
+} as const;
+
+const ANALYTICS_CACHE_TTL = 5 * 60 * 1000;
+
+interface CacheEntry<T> {
+    data: T;
+    ts: number;
+}
+
+const analyticsCache = new Map<
+    string,
+    CacheEntry<OverviewAnalyticsType | KeywordAnalyticsType>
+>();
+
 interface JobStore {
     query: string;
     page: number;
@@ -40,28 +73,15 @@ export const useJobStore = create<JobStore>((set, get) => ({
     page: 0,
     pages: 0,
     hasMorePages: true,
-    setQuery: (query) => set({ query }),
+    setQuery: (query) => set({ query, page: 0, vacancies: [] }),
     vacancies: [],
     isLoading: false,
     error: null,
-    keywords: [
-        "React",
-        "Vue",
-        "Angular",
-        "TypeScript",
-        "Node.js",
-        "Next.js",
-        "Tailwind",
-        "Redux",
-        "Zustand",
-        "Docker",
-        "PostgreSQL",
-        "GraphQL",
-    ],
+    keywords: [...DEFAULT_KEYWORDS],
     setKeywords: (keywords) => set({ keywords }),
     fetchVacancies: async (area, filters) => {
         const store = get();
-        set((prev) => ({ isLoading: true, error: null, query: prev.query }));
+        set({ isLoading: true, error: null });
         try {
             const params = new URLSearchParams();
             params.append("text", store.query);
@@ -70,12 +90,10 @@ export const useJobStore = create<JobStore>((set, get) => ({
                 params.append("experience", exp),
             );
             filters?.workFormat.forEach((format) => {
-                const map: Record<string, string> = {
-                    HYBRID: "hybrid",
-                    REMOTE: "remote",
-                    ON_SITE: "on_site",
-                };
-                params.append("work_format", map[format].toUpperCase());
+                params.append(
+                    "work_format",
+                    WORK_FORMAT_MAP[format].toUpperCase(),
+                );
             });
 
             if (filters?.salary) {
@@ -130,203 +148,113 @@ export const useJobStore = create<JobStore>((set, get) => ({
     setPage: (page) => set({ page }),
     getOverviewAnalytics: async (area, filters) => {
         const store = get();
+
+        const cacheKey = makeCacheKey(
+            "overview",
+            store.query.trim(),
+            area,
+            filters,
+        );
+        const cached = getFromCache<OverviewAnalyticsType>(cacheKey);
+        if (cached) return cached;
+
         set({ isLoading: true, error: null });
 
-        const result: Array<{ name: string; salary: number }> = [];
-        const ranges = getMonthDaysRanges();
+        try {
+            const ranges = getMonthDaysRanges();
+            const { allItems, firstData } = await fetchAllVacancies(
+                store.query.trim(),
+                area,
+                ranges,
+                filters,
+            );
 
-        const params = new URLSearchParams();
+            const result: Array<{ name: string; salary: number }> = [];
 
-        const query = store.query.trim();
-        if (query) {
-            params.append("text", query);
-        }
-
-        if (area) {
-            params.append("area", area.toString());
-        }
-
-        filters?.experience.forEach((exp) => {
-            params.append("experience", exp);
-        });
-
-        filters?.workFormat.forEach((format) => {
-            const map: Record<string, string> = {
-                HYBRID: "HYBRID",
-                REMOTE: "REMOTE",
-                ON_SITE: "ON_SITE",
-            };
-            params.append("work_format", map[format]);
-        });
-
-        params.append("per_page", "100");
-        params.append("date_from", ranges.from);
-        params.append("date_to", ranges.to);
-        params.append("only_with_salary", "true");
-
-        const firstUrl = `/api/hh/vacancies?${params.toString()}`;
-        const firstRes = await fetch(firstUrl);
-        const firstData = (await firstRes.json()) as IVacancyResponse;
-
-        const allItems = [...(firstData.items ?? [])];
-        const totalPages = firstData.pages ?? 1;
-
-        const pageRequests = Array.from(
-            { length: totalPages - 1 },
-            (_, idx) => {
-                const page = idx + 1;
-                const p = new URLSearchParams(params);
-                p.set("page", page.toString());
-                return fetch(`/api/hh/vacancies?${p.toString()}`).then(
-                    async (res) => (await res.json()) as IVacancyResponse,
+            for (let day = 1; day <= ranges.daysInMonth; day++) {
+                const dayItems = allItems.filter(
+                    (item) => new Date(item.created_at).getDate() === day,
                 );
-            },
-        );
+                result.push({
+                    name: day.toString(),
+                    salary: getAverageSalary(dayItems),
+                });
+            }
 
-        const restPages = await Promise.all(pageRequests);
+            const stats = buildKeywordStats(allItems, store.keywords);
+            const sorted = [...stats].sort((a, b) => b.count - a.count);
 
-        for (const pageData of restPages) {
-            allItems.push(...(pageData.items ?? []));
-        }
-
-        for (let day = 1; day <= ranges.daysInMonth; day++) {
-            const dayItems = allItems.filter((item) => {
-                const created = new Date(item.created_at);
-                return created.getDate() === day;
-            });
-
-            result.push({
-                name: day.toString(),
-                salary: getAverageSalary(dayItems),
-            });
-        }
-
-        const stats = store.keywords.map((keyword) => {
-            const regex = new RegExp(`\\b${keyword}\\b`, "i");
-            let count = 0;
-
-            allItems.forEach((job) => {
-                const textToSearch = `${job.name} ${job.snippet?.requirement || ""} ${job.snippet?.responsibility || ""}`;
-                if (regex.test(textToSearch)) {
-                    count++;
-                }
-            });
-
-            return {
-                keyword,
-                count,
-                percentage: ((count / allItems.length) * 100).toFixed(1),
+            const output: OverviewAnalyticsType = {
+                salaryTrends: result,
+                jobsCount: firstData.found ?? 0,
+                topWord: sorted[0],
+                topWords: sorted,
+                avgSalary: getAverageSalary(allItems),
             };
-        });
-        const vacanciesCount = restPages[0].found;
-        const avgSalary = getAverageSalary(allItems);
 
-        set({ isLoading: false });
-        return {
-            salaryTrends: result ?? null,
-            jobsCount: vacanciesCount,
-            topWord: stats.sort((a, b) => b.count - a.count)[0],
-            topWords: stats.sort((a, b) => b.count - a.count) ?? [],
-            avgSalary,
-        };
+            setToCache(cacheKey, output);
+            set({ isLoading: false });
+            return output;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            set({ error: error?.message || error, isLoading: false });
+            throw error;
+        }
     },
+
     getKeywordAnalytics: async (area, filters) => {
         const store = get();
+
+        const cacheKey = makeCacheKey(
+            "keyword",
+            store.query.trim(),
+            area,
+            filters,
+        );
+        const cached = getFromCache<KeywordAnalyticsType>(cacheKey);
+        if (cached) return cached;
+
         set({ isLoading: true, error: null });
 
-        const demandVelocity: KeywordAnalyticsType["demandVelocity"] = [];
-        const ranges = getMonthDaysRanges();
+        try {
+            const ranges = getMonthDaysRanges();
+            const { allItems } = await fetchAllVacancies(
+                store.query.trim(),
+                area,
+                ranges,
+                filters,
+            );
 
-        const params = new URLSearchParams();
+            const demandVelocity: KeywordAnalyticsType["demandVelocity"] = [];
 
-        const query = store.query.trim();
-        if (query) {
-            params.append("text", query);
-        }
-
-        if (area) {
-            params.append("area", area.toString());
-        }
-
-        filters?.experience.forEach((exp) => {
-            params.append("experience", exp);
-        });
-
-        filters?.workFormat.forEach((format) => {
-            const map: Record<string, string> = {
-                HYBRID: "HYBRID",
-                REMOTE: "REMOTE",
-                ON_SITE: "ON_SITE",
-            };
-            params.append("work_format", map[format]);
-        });
-
-        params.append("per_page", "100");
-        params.append("date_from", ranges.from);
-        params.append("date_to", ranges.to);
-        params.append("only_with_salary", "true");
-
-        const firstUrl = `/api/hh/vacancies?${params.toString()}`;
-        const firstRes = await fetch(firstUrl);
-        const firstData = (await firstRes.json()) as IVacancyResponse;
-
-        const allItems = [...(firstData.items ?? [])];
-        const totalPages = firstData.pages ?? 1;
-
-        const pageRequests = Array.from(
-            { length: totalPages - 1 },
-            (_, idx) => {
-                const page = idx + 1;
-                const p = new URLSearchParams(params);
-                p.set("page", page.toString());
-                return fetch(`/api/hh/vacancies?${p.toString()}`).then(
-                    async (res) => (await res.json()) as IVacancyResponse,
+            for (let day = 1; day <= ranges.daysInMonth; day++) {
+                const dayItems = allItems.filter(
+                    (item) => new Date(item.created_at).getDate() === day,
                 );
-            },
-        );
+                demandVelocity.push({
+                    name: day.toString(),
+                    vacanciesCount: dayItems.length,
+                });
+            }
 
-        const restPages = await Promise.all(pageRequests);
+            const sorted = buildKeywordStats(allItems, store.keywords).sort(
+                (a, b) => b.count - a.count,
+            );
 
-        for (const pageData of restPages) {
-            allItems.push(...(pageData.items ?? []));
-        }
-
-        for (let day = 1; day <= ranges.daysInMonth; day++) {
-            const dayItems = allItems.filter((item) => {
-                const created = new Date(item.created_at);
-                return created.getDate() === day;
-            });
-
-            demandVelocity.push({
-                name: day.toString(),
-                vacanciesCount: dayItems.length,
-            });
-        }
-
-        const stats = store.keywords.map((keyword) => {
-            const regex = new RegExp(`\\b${keyword}\\b`, "i");
-            let count = 0;
-
-            allItems.forEach((job) => {
-                const textToSearch = `${job.name} ${job.snippet?.requirement || ""} ${job.snippet?.responsibility || ""}`;
-                if (regex.test(textToSearch)) {
-                    count++;
-                }
-            });
-
-            return {
-                keyword,
-                count,
-                percentage: ((count / allItems.length) * 100).toFixed(1),
+            const output: KeywordAnalyticsType = {
+                demandVelocity,
+                salaryDistribution: getSalaryDistribution(allItems),
+                topWords: sorted,
             };
-        });
 
-        set({ isLoading: false });
-        return {
-            demandVelocity: demandVelocity,
-            salaryDistribution: getSalaryDistribution(allItems),
-            topWords: stats.sort((a, b) => b.count - a.count) ?? [],
-        };
+            setToCache(cacheKey, output);
+            set({ isLoading: false });
+            return output;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            set({ error: error?.message || error, isLoading: false });
+            throw error;
+        }
     },
 }));
 
@@ -375,7 +303,7 @@ function getSalaryDistribution(items: IVacancy[]) {
                 0,
             );
             result.push({
-                name: `RUR${value}K`,
+                name: `RUR${value}`,
                 jobsCount,
             });
         } else {
@@ -390,4 +318,105 @@ function getSalaryDistribution(items: IVacancy[]) {
         }
     });
     return result;
+}
+
+async function fetchAllVacancies(
+    query: string,
+    area: number | null,
+    ranges: {
+        from: string;
+        to: string;
+        daysInMonth: number;
+    },
+    filters?: IFilterStore,
+): Promise<{ allItems: IVacancy[]; firstData: IVacancyResponse }> {
+    const params = new URLSearchParams();
+
+    if (query) {
+        params.append("text", query);
+    }
+
+    if (area) {
+        params.append("area", area.toString());
+    }
+
+    filters?.experience.forEach((exp) => {
+        params.append("experience", exp);
+    });
+
+    filters?.workFormat.forEach((format) => {
+        params.append("work_format", WORK_FORMAT_MAP[format]);
+    });
+
+    params.append("per_page", "100");
+    params.append("date_from", ranges.from);
+    params.append("date_to", ranges.to);
+    params.append("only_with_salary", "true");
+
+    const firstRes = await fetch(`/api/hh/vacancies?${params}`);
+    const firstData = (await firstRes.json()) as IVacancyResponse;
+    const allItems = [...(firstData.items ?? [])];
+    const totalPages = firstData.pages ?? 1;
+
+    const rest = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, i) => {
+            const p = new URLSearchParams(params);
+            p.set("page", (i + 1).toString());
+            return fetch(`/api/hh/vacancies?${p}`).then(
+                (r) => r.json() as Promise<IVacancyResponse>,
+            );
+        }),
+    );
+
+    rest.forEach((page) => allItems.push(...(page.items ?? [])));
+    return { allItems, firstData };
+}
+
+function makeCacheKey(
+    type: "overview" | "keyword",
+    query: string,
+    area: number | null,
+    filters?: IFilterStore,
+): string {
+    return JSON.stringify({ type, query, area, filters });
+}
+
+function getFromCache<T>(key: string): T | null {
+    const entry = analyticsCache.get(key) as CacheEntry<T> | undefined;
+    if (!entry) return null;
+    if (Date.now() - entry.ts > ANALYTICS_CACHE_TTL) {
+        analyticsCache.delete(key);
+        return null;
+    }
+    return entry.data;
+}
+
+function setToCache<T extends OverviewAnalyticsType | KeywordAnalyticsType>(
+    key: string,
+    data: T,
+): void {
+    analyticsCache.set(key, { data, ts: Date.now() });
+}
+
+function buildKeywordStats(
+    items: IVacancy[],
+    keywords: string[],
+): Array<{ keyword: string; count: number; percentage: string }> {
+    return keywords.map((keyword) => {
+        const regex = new RegExp(`\\b${keyword}\\b`, "i");
+        let count = 0;
+
+        items.forEach((job) => {
+            const text = `${job.name} ${job.snippet?.requirement ?? ""} ${job.snippet?.responsibility ?? ""}`;
+            if (regex.test(text)) count++;
+        });
+
+        return {
+            keyword,
+            count,
+            percentage: items.length
+                ? ((count / items.length) * 100).toFixed(1)
+                : "0.0",
+        };
+    });
 }

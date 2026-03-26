@@ -4,23 +4,39 @@ import { useJobStore } from "@/stores/useJobStore";
 import { OverviewAnalyticsType } from "@/types/stores.types";
 import { useEffect, useState } from "react";
 import SalaryTrendsChart from "./Charts/SalaryTrendsChart";
+import { useShallow } from "zustand/react/shallow";
 
 export default function Overview() {
     const [overviewAnalytics, setOverviewAnalytics] =
         useState<OverviewAnalyticsType | null>(null);
 
-    const { getOverviewAnalytics } = useJobStore();
-    const filters = useFilterStore();
-    const { currentArea } = useAreaStore();
+    const getOverviewAnalytics = useJobStore((s) => s.getOverviewAnalytics);
+
+    const filters = useFilterStore(
+        useShallow((s) => ({
+            experience: s.experience,
+            workFormat: s.workFormat,
+            salary: s.salary,
+            setExperience: s.setExperience,
+            setSalary: s.setSalary,
+            setWorkFormat: s.setWorkFormat,
+        })),
+    );
+
+    const currentArea = useAreaStore((s) => s.currentArea);
 
     useEffect(() => {
+        let cancelled = false;
         (async () => {
             const res = await getOverviewAnalytics(currentArea, filters);
-            if (!res) return;
-            console.log(res);
+            if (cancelled || !res) return;
             setOverviewAnalytics(res);
         })();
+        return () => {
+            cancelled = true;
+        };
     }, [getOverviewAnalytics, currentArea, filters]);
+
     return (
         <div className="size-full flex-1 px-4 py-6 sm:px-6">
             <p className="font-black text-[11px] text-[#60a5fa] leading-normal tracking-wide uppercase">

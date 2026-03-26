@@ -14,22 +14,11 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useEffect, useState } from "react";
-import SalaryTrendsChart from "./Charts/SalaryTrendsChart";
-import { useJobStore } from "@/stores/useJobStore";
-import { useFilterStore } from "@/stores/useFilterStore";
-import { useAreaStore } from "@/stores/useAreaStore";
-import { KeyWordType, OverviewAnalyticsType } from "@/types/stores.types";
 import Overview from "./Overview";
 import Keyword from "./Keyword";
 
 const Analytics = () => {
-    const [overviewAnalytics, setOverviewAnalytics] =
-        useState<OverviewAnalyticsType | null>(null);
     const [hash, setHash] = useState("");
-
-    const { getOverviewAnalytics } = useJobStore();
-    const filters = useFilterStore();
-    const { currentArea } = useAreaStore();
 
     useEffect(() => {
         setTimeout(() => setHash(window.location.hash.replace("#", "")));
@@ -41,15 +30,6 @@ const Analytics = () => {
         window.addEventListener("hashchange", handleHashChange);
         return () => window.removeEventListener("hashchange", handleHashChange);
     }, []);
-
-    useEffect(() => {
-        (async () => {
-            const res = await getOverviewAnalytics(currentArea, filters);
-            if (!res) return;
-            console.log(res);
-            setOverviewAnalytics(res);
-        })();
-    }, [getOverviewAnalytics, currentArea, filters]);
 
     return (
         <div className="flex min-h-dvh w-full">

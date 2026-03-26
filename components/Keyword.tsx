@@ -4,22 +4,37 @@ import { useJobStore } from "@/stores/useJobStore";
 import { KeywordAnalyticsType } from "@/types/stores.types";
 import { useEffect, useState } from "react";
 import KeywordsChart from "./Charts/KeywordsChart";
+import { useShallow } from "zustand/react/shallow";
 
 export default function Keyword() {
     const [keywordAnalytics, setKeywordAnalytics] =
         useState<KeywordAnalyticsType | null>(null);
 
-    const { getKeywordAnalytics, query } = useJobStore();
-    const filters = useFilterStore();
-    const { currentArea } = useAreaStore();
+    const getKeywordAnalytics = useJobStore((s) => s.getKeywordAnalytics);
+
+    const filters = useFilterStore(
+        useShallow((s) => ({
+            experience: s.experience,
+            workFormat: s.workFormat,
+            salary: s.salary,
+            setExperience: s.setExperience,
+            setSalary: s.setSalary,
+            setWorkFormat: s.setWorkFormat,
+        })),
+    );
+
+    const currentArea = useAreaStore((s) => s.currentArea);
 
     useEffect(() => {
+        let cancelled = false;
         (async () => {
             const res = await getKeywordAnalytics(currentArea, filters);
-            if (!res) return;
-            console.log(res);
+            if (cancelled || !res) return;
             setKeywordAnalytics(res);
         })();
+        return () => {
+            cancelled = true;
+        };
     }, [getKeywordAnalytics, currentArea, filters]);
     return (
         <div className="size-full flex-1 px-4 py-6 sm:px-6">
