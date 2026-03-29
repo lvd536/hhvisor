@@ -20,19 +20,19 @@ export default function WorkFormatFilter() {
                 }
             >
                 <ToggleGroupItem
-                    className={`rounded-[4px] font-medium justify-start uppercase text-[12px] font-bold ${workFormat.has("ON_SITE") && "text-[#60a5fa]"}`}
+                    className={`rounded-[4px] justify-start uppercase text-[12px] font-bold ${workFormat.has("ON_SITE") && "text-[#60a5fa]"}`}
                     value="ON_SITE"
                 >
                     On-Site
                 </ToggleGroupItem>
                 <ToggleGroupItem
-                    className={`rounded-[4px] font-medium justify-start uppercase text-[12px] font-bold ${workFormat.has("REMOTE") && "text-[#60a5fa]"}`}
+                    className={`rounded-[4px] justify-start uppercase text-[12px] font-bold ${workFormat.has("REMOTE") && "text-[#60a5fa]"}`}
                     value="REMOTE"
                 >
                     Remote
                 </ToggleGroupItem>
                 <ToggleGroupItem
-                    className={`rounded-[4px] font-medium justify-start uppercase text-[12px] font-bold ${workFormat.has("HYBRID") && "text-[#60a5fa]"}`}
+                    className={`rounded-[4px] justify-start uppercase text-[12px] font-bold ${workFormat.has("HYBRID") && "text-[#60a5fa]"}`}
                     value="HYBRID"
                 >
                     Hybrid
