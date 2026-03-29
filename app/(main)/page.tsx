@@ -1,6 +1,6 @@
 "use client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import MarketDiscovery from "@/components/MarketDiscovery";
+import MarketDiscovery from "@/components/MarketDiscovery/MarketDiscovery";
 import Analytics from "@/components/Analytics";
 import Saved from "@/components/Saved";
 

@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useEffect, useState } from "react";
-import Overview from "./Overview";
-import Keyword from "./Keyword";
+import Overview from "./Overview/Overview";
+import Keyword from "./Keyword/Keyword";
 
 const Analytics = () => {
     const [hash, setHash] = useState("");

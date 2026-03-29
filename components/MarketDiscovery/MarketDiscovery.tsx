@@ -1,13 +1,13 @@
 "use client";
 import { useJobStore } from "@/stores/useJobStore";
-import { PaginationWithLinks } from "./ui/pagination-with-links";
+import { PaginationWithLinks } from "../ui/pagination-with-links";
 import { VACANCIES_PER_PAGE } from "@/consts/api";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
 import { Briefcase } from "lucide-react";
-import JobCard from "./JobCard";
-import JobFilters from "./JobFilters";
+import JobCard from "../JobCard/JobCard";
+import JobFilters from "../JobFilters/JobFilters";
 import { useFilterStore } from "@/stores/useFilterStore";
 
 import {

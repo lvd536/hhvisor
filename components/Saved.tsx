@@ -1,5 +1,5 @@
 import { useSavedStore } from "@/stores/useSavedStore";
-import JobCard from "./JobCard";
+import JobCard from "./JobCard/JobCard";
 
 export default function Saved() {
     const { savedVacancies } = useSavedStore();

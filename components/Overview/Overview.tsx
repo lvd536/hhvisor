@@ -3,7 +3,7 @@ import { useFilterStore } from "@/stores/useFilterStore";
 import { useJobStore } from "@/stores/useJobStore";
 import { OverviewAnalyticsType } from "@/types/stores.types";
 import { useEffect, useState } from "react";
-import SalaryTrendsChart from "./Charts/SalaryTrendsChart";
+import SalaryTrendsChart from "../Charts/SalaryTrendsChart";
 import { useShallow } from "zustand/react/shallow";
 
 export default function Overview() {
