@@ -24,7 +24,7 @@ export default function Home() {
             <TabsContent value="home" className="w-full container">
                 <MarketDiscovery />
             </TabsContent>
-            <TabsContent value="saved">
+            <TabsContent value="saved" className="w-full container">
                 <Saved />
             </TabsContent>
         </Tabs>

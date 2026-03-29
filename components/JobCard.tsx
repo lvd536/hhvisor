@@ -1,12 +1,15 @@
 import { getPublishedAt } from "@/utils/date";
 import { IVacancy } from "@/types/api.types";
 import { Banknote, Building2, Clock } from "lucide-react";
+import { useSavedStore } from "@/stores/useSavedStore";
 
 interface IProps {
     vacancy: IVacancy;
 }
 
 export default function JobCard({ vacancy }: IProps) {
+    const { savedVacancies, setSavedVacancies } = useSavedStore();
+    const isSaved = savedVacancies.some((v) => v.id === vacancy.id);
     return (
         <div className="flex justify-between w-full min-h-51 bg-card rounded-[8px] p-8">
             <div className="flex flex-col gap-2">
@@ -88,8 +91,21 @@ export default function JobCard({ vacancy }: IProps) {
                 >
                     Analyze
                 </a>
-                <button className="rounded-sm w-16 md:w-32 py-3 bg-secondary">
-                    Save
+                <button
+                    className="rounded-sm w-16 md:w-32 py-3 bg-secondary"
+                    onClick={() => {
+                        if (isSaved) {
+                            setSavedVacancies(
+                                savedVacancies.filter(
+                                    (v) => v.id !== vacancy.id,
+                                ),
+                            );
+                        } else {
+                            setSavedVacancies([...savedVacancies, vacancy]);
+                        }
+                    }}
+                >
+                    {isSaved ? "Delete" : "Save"}
                 </button>
             </div>
         </div>
