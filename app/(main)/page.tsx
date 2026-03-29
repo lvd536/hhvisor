@@ -1,14 +1,8 @@
 "use client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
 import MarketDiscovery from "@/components/MarketDiscovery";
 import Analytics from "@/components/Analytics";
+import Saved from "@/components/Saved";
 
 export default function Home() {
     return (
@@ -25,36 +19,13 @@ export default function Home() {
                 </div>
             </TabsList>
             <TabsContent value="analytics" className="w-full">
-                {/*<Card>
-                    <CardHeader>
-                        <CardTitle>Analytics</CardTitle>
-                        <CardDescription>
-                            Track performance and user engagement metrics.
-                            Monitor trends and identify growth opportunities.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="text-sm text-muted-foreground">
-                        Page views are up 25% compared to last month.
-                    </CardContent>
-                </Card>*/}
                 <Analytics />
             </TabsContent>
             <TabsContent value="home" className="w-full container">
                 <MarketDiscovery />
             </TabsContent>
             <TabsContent value="saved">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Saved</CardTitle>
-                        <CardDescription>
-                            Manage your account preferences and options.
-                            Customize your experience to fit your needs.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="text-sm text-muted-foreground">
-                        Configure notifications, security, and themes.
-                    </CardContent>
-                </Card>
+                <Saved />
             </TabsContent>
         </Tabs>
     );
