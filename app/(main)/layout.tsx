@@ -9,11 +9,13 @@ export default function MainLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const { initVacancies } = useJobStore();
-    const { initAreas } = useAreaStore();
+    const init = useJobStore((s) => s.init);
+    const initAreas = useAreaStore((s) => s.initAreas);
+
     useEffect(() => {
-        initVacancies();
+        init();
         initAreas();
-    }, [initVacancies, initAreas]);
+    }, []);
+
     return <>{children}</>;
 }

@@ -1,5 +1,9 @@
 import { VACANCIES_PER_PAGE } from "@/consts/api";
-import { IVacancy, IVacancyResponse } from "@/types/api.types";
+import {
+    DictionariesResponse,
+    IVacancy,
+    IVacancyResponse,
+} from "@/types/api.types";
 import { create } from "zustand";
 import { IFilterStore } from "./useFilterStore";
 import { getMonthDaysRanges } from "@/utils/date";
@@ -36,6 +40,15 @@ interface CacheEntry<T> {
     ts: number;
 }
 
+type CurrenciesMap = Record<
+    string,
+    {
+        rate: number;
+        abbr: string;
+        name: string;
+    }
+>;
+
 const analyticsCache = new Map<
     string,
     CacheEntry<OverviewAnalyticsType | KeywordAnalyticsType>
@@ -46,17 +59,18 @@ interface JobStore {
     page: number;
     pages: number;
     hasMorePages: boolean;
-    setQuery: (query: string) => void;
-    setPage: (page: number) => void;
+    currencies: CurrenciesMap;
     vacancies: IVacancy[];
     isLoading: boolean;
     error: string | null;
+    keywords: string[];
+    setQuery: (query: string) => void;
+    setPage: (page: number) => void;
     fetchVacancies: (
         area: number | null,
         filters?: IFilterStore,
     ) => Promise<void>;
-    initVacancies: () => Promise<void>;
-    keywords: string[];
+    init: () => Promise<void>;
     setKeywords: (keywords: string[]) => void;
     getOverviewAnalytics: (
         area: number | null,
@@ -73,6 +87,7 @@ export const useJobStore = create<JobStore>((set, get) => ({
     page: 0,
     pages: 0,
     hasMorePages: true,
+    currencies: {},
     setQuery: (query) => set({ query, page: 0, vacancies: [] }),
     vacancies: [],
     isLoading: false,
@@ -125,8 +140,9 @@ export const useJobStore = create<JobStore>((set, get) => ({
             set({ error: error?.message || error, isLoading: false });
         }
     },
-    initVacancies: async () => {
+    init: async () => {
         set({ isLoading: true, error: null });
+        const store = get();
         try {
             const res = await fetch(
                 `/api/hh/vacancies?per_page=${VACANCIES_PER_PAGE}`,
@@ -140,6 +156,12 @@ export const useJobStore = create<JobStore>((set, get) => ({
                 page: data.page ?? 0,
                 pages: data.pages ?? 0,
             });
+
+            if (Object.keys(store.currencies).length === 0) {
+                const currencies = await getCurrencies();
+                set({ currencies });
+            }
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             set({ error: error?.message || error, isLoading: false });
@@ -148,6 +170,11 @@ export const useJobStore = create<JobStore>((set, get) => ({
     setPage: (page) => set({ page }),
     getOverviewAnalytics: async (area, filters) => {
         const store = get();
+
+        if (Object.keys(store.currencies).length === 0) {
+            const currencies = await getCurrencies();
+            set({ currencies });
+        }
 
         const cacheKey = makeCacheKey(
             "overview",
@@ -177,7 +204,7 @@ export const useJobStore = create<JobStore>((set, get) => ({
                 );
                 result.push({
                     name: day.toString(),
-                    salary: getAverageSalary(dayItems),
+                    salary: await getAverageSalary(dayItems, store.currencies),
                 });
             }
 
@@ -189,7 +216,7 @@ export const useJobStore = create<JobStore>((set, get) => ({
                 jobsCount: firstData.found ?? 0,
                 topWord: sorted[0],
                 topWords: sorted,
-                avgSalary: getAverageSalary(allItems),
+                avgSalary: await getAverageSalary(allItems, store.currencies),
             };
 
             setToCache(cacheKey, output);
@@ -204,6 +231,11 @@ export const useJobStore = create<JobStore>((set, get) => ({
 
     getKeywordAnalytics: async (area, filters) => {
         const store = get();
+
+        if (Object.keys(store.currencies).length === 0) {
+            const currencies = await getCurrencies();
+            set({ currencies });
+        }
 
         const cacheKey = makeCacheKey(
             "keyword",
@@ -243,7 +275,10 @@ export const useJobStore = create<JobStore>((set, get) => ({
 
             const output: KeywordAnalyticsType = {
                 demandVelocity,
-                salaryDistribution: getSalaryDistribution(allItems),
+                salaryDistribution: await getSalaryDistribution(
+                    allItems,
+                    store.currencies,
+                ),
                 topWords: sorted,
             };
 
@@ -258,10 +293,71 @@ export const useJobStore = create<JobStore>((set, get) => ({
     },
 }));
 
-function getSalaryValue(salary: IVacancy["salary"]): number | null {
+async function getCurrencies() {
+    const response = await fetch("/api/hh/dictionaries");
+    const dictionaries = (await response.json()) as DictionariesResponse;
+
+    if (!dictionaries) {
+        throw new Error("Failed to get dictionaries. Try again later");
+    }
+
+    const currencies = dictionaries.currency.reduce(
+        (acc, currency) => {
+            acc[currency.code] = {
+                rate: currency.rate,
+                abbr: currency.abbr,
+                name: currency.name,
+            };
+
+            return acc;
+        },
+        {} as Record<
+            string,
+            {
+                rate: number;
+                abbr: string;
+                name: string;
+            }
+        >,
+    );
+
+    return currencies;
+}
+
+async function normalizeSalary(
+    salary: IVacancy["salary"],
+    currencies: CurrenciesMap,
+    targetCurrency = "RUR",
+) {
+    const normalize = (value: number, currency: string) => {
+        const fromCurrency = currencies[currency];
+        const toCurrency = currencies[targetCurrency];
+
+        if (!fromCurrency || !toCurrency) {
+            throw new Error(`Unknown currency: ${currency}`);
+        }
+
+        const valueInRub = value / fromCurrency.rate;
+        return Math.round(valueInRub * toCurrency.rate);
+    };
+
+    return {
+        from:
+            salary?.from != null
+                ? normalize(salary.from, salary.currency)
+                : null,
+        to: salary?.to != null ? normalize(salary.to, salary.currency) : null,
+        currency: targetCurrency,
+    };
+}
+
+async function getSalaryValue(
+    salary: IVacancy["salary"],
+    currencies: CurrenciesMap,
+): Promise<number | null> {
     if (!salary) return null;
 
-    const { from, to } = salary;
+    const { from, to } = await normalizeSalary(salary, currencies);
 
     if (from && to) return (from + to) / 2;
     if (from) return from;
@@ -270,12 +366,15 @@ function getSalaryValue(salary: IVacancy["salary"]): number | null {
     return null;
 }
 
-function getAverageSalary(items: IVacancyResponse["items"]): number {
+async function getAverageSalary(
+    items: IVacancyResponse["items"],
+    currencies: CurrenciesMap,
+): Promise<number> {
     let sum = 0;
     let count = 0;
 
     for (const i of items) {
-        const value = getSalaryValue(i.salary);
+        const value = await getSalaryValue(i.salary, currencies);
 
         if (value) {
             sum += value;
@@ -286,37 +385,42 @@ function getAverageSalary(items: IVacancyResponse["items"]): number {
     return count ? sum / count : 0;
 }
 
-function getSalaryDistribution(items: IVacancy[]) {
+async function getSalaryDistribution(
+    items: IVacancy[],
+    currencies: CurrenciesMap,
+) {
     const result: KeywordAnalyticsType["salaryDistribution"] = [];
 
     const targetValues = [0, 30000, 80000, 120000, 160000, 200000, 400000];
 
-    const itemsSalaries = items.map((i) =>
-        i.salary ? i.salary.from || i.salary.to || 0 : 0,
+    const itemsSalaries = await Promise.all(
+        items.map(async (item) => {
+            const value = await getSalaryValue(item.salary, currencies);
+            return value ?? 0;
+        }),
     );
 
     targetValues.forEach((value, index, arr) => {
-        if (index !== 0) {
-            const jobsCount = itemsSalaries.reduce(
-                (acc, item) =>
-                    item <= value && item > arr[index - 1] ? acc + 1 : acc,
-                0,
-            );
-            result.push({
-                name: `RUR${value}`,
-                jobsCount,
-            });
+        let jobsCount = 0;
+
+        if (index === 0) {
+            jobsCount = itemsSalaries.reduce((acc, salary) => {
+                return salary < arr[index + 1] ? acc + 1 : acc;
+            }, 0);
         } else {
-            const jobsCount = itemsSalaries.reduce(
-                (acc, item) => (item < arr[index + 1] ? acc + 1 : acc),
-                0,
-            );
-            result.push({
-                name: `RUR${value}`,
-                jobsCount,
-            });
+            jobsCount = itemsSalaries.reduce((acc, salary) => {
+                return salary > arr[index - 1] && salary <= value
+                    ? acc + 1
+                    : acc;
+            }, 0);
         }
+
+        result.push({
+            name: `RUR${value}`,
+            jobsCount,
+        });
     });
+
     return result;
 }
 
