@@ -101,9 +101,10 @@ export const useJobStore = create<JobStore>((set, get) => ({
                 page: data.page ?? 0,
                 pages: data.pages ?? 0,
             });
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            set({ error: error?.message || error, isLoading: false });
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : String(error);
+            set({ error: message, isLoading: false });
         }
     },
     init: async () => {
@@ -127,10 +128,10 @@ export const useJobStore = create<JobStore>((set, get) => ({
                 const currencies = await getCurrencies();
                 set({ currencies });
             }
-
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            set({ error: error?.message || error, isLoading: false });
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : String(error);
+            set({ error: message, isLoading: false });
         }
     },
     setPage: (page) => set({ page }),
@@ -188,9 +189,10 @@ export const useJobStore = create<JobStore>((set, get) => ({
             setToCache(cacheKey, output);
             set({ isLoading: false });
             return output;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            set({ error: error?.message || error, isLoading: false });
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : String(error);
+            set({ error: message, isLoading: false });
             throw error;
         }
     },
@@ -251,9 +253,10 @@ export const useJobStore = create<JobStore>((set, get) => ({
             setToCache(cacheKey, output);
             set({ isLoading: false });
             return output;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            set({ error: error?.message || error, isLoading: false });
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : String(error);
+            set({ error: message, isLoading: false });
             throw error;
         }
     },

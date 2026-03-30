@@ -126,6 +126,8 @@ export function getSalaryDistribution(
             jobsCount = itemsSalaries.reduce((acc, salary) => {
                 return salary < arr[index + 1] ? acc + 1 : acc;
             }, 0);
+        } else if (index === arr.length - 1) {
+            jobsCount = itemsSalaries.filter((s) => s > arr[index - 1]).length;
         } else {
             jobsCount = itemsSalaries.reduce((acc, salary) => {
                 return salary > arr[index - 1] && salary <= value
@@ -168,7 +170,7 @@ export async function fetchAllVacancies(
     });
 
     filters?.workFormat.forEach((format) => {
-        params.append("work_format", WORK_FORMAT_MAP[format]);
+        params.append("work_format", WORK_FORMAT_MAP[format].toUpperCase());
     });
 
     params.append("per_page", "100");
