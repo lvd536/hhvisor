@@ -26,3 +26,17 @@ export type KeyWordType = {
     count: number;
     percentage: string;
 };
+
+export type CurrenciesMap = Record<
+    string,
+    {
+        rate: number;
+        abbr: string;
+        name: string;
+    }
+>;
+
+export interface CacheEntry<T> {
+    data: T;
+    ts: number;
+}
