@@ -11,6 +11,9 @@ export async function GET(request: NextRequest) {
             headers: {
                 "User-Agent": "HHVisorDev/1.0 (nbikiti@bk.com)",
             },
+            next: {
+                revalidate: 60 * 60 * 24 * 31,
+            },
         });
 
         if (!response.ok) {

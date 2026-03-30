@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
     try {
         const response = await fetch(hhUrl.toString(), {
             headers: { "User-Agent": "HHVisorDev/1.0 (nbikiti@bk.com)" },
+            next: {
+                revalidate: 60 * 5,
+            },
         });
 
         if (!response.ok) {
