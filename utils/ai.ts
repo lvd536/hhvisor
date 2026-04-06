@@ -39,8 +39,6 @@ export async function getAIVacancyMetrics(vacancy: IDetailedVacancy) {
             .replace(/```/g, "")
             .trim();
 
-        console.log(cleanJsonString);
-
         return JSON.parse(cleanJsonString) as IVacancyAnalysisResponse;
     } catch (error) {
         console.error("Ошибка парсинга JSON от нейросети:", error);
