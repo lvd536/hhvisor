@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import SafeHTML from "@/components/SafeHTML";
 import Image from "next/image";
 import BackButton from "@/components/BackButton";
+import { getAIVacancyMetrics } from "@/utils/ai";
 
 interface IProps {
     params: Promise<{ id: string }>;
@@ -39,6 +40,8 @@ export default async function VacancyPage({ params }: IProps) {
     );
 
     const employer = (await res.json()) as IDetailedEmployer;
+
+    const aiAnalysis = vacancy ? await getAIVacancyMetrics(vacancy) : {};
 
     return (
         <div className="flex max-md:flex-col w-full h-full items-start gap-4 justify-between my-8 container mx-auto">
@@ -124,7 +127,10 @@ export default async function VacancyPage({ params }: IProps) {
                                 }}
                                 key={`skill-${index}`}
                             >
-                                <CheckCircle color="#60A5FA" />
+                                <CheckCircle
+                                    color="#60A5FA"
+                                    className="shrink-0"
+                                />
                                 <p
                                     className="font-medium text-[14px]"
                                     style={{ lineHeight: "143%" }}
@@ -134,6 +140,116 @@ export default async function VacancyPage({ params }: IProps) {
                             </div>
                         ))}
                 </div>
+                <div className="flex items-center gap-3 mt-12">
+                    <div className="w-8 h-1 rounded-full bg-ring" />
+                    <p
+                        className="font-bold text-[20px] tracking-tight"
+                        style={{ lineHeight: "140%" }}
+                    >
+                        AI Analysis
+                    </p>
+                </div>
+                {aiAnalysis ? (
+                    <div className="flex flex-wrap w-full mt-6 gap-4">
+                        <div
+                            className="flex items-center justify-between gap-5 text-wrap rounded-[8px] p-4"
+                            style={{
+                                border: "1px solid rgba(255, 255, 255, 0.05)",
+                            }}
+                        >
+                            <p
+                                className="text-[14px] text-muted-foreground"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                Clarity Score
+                            </p>
+                            <p
+                                className="font-medium text-[14px]"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                {aiAnalysis.clarity_score}
+                            </p>
+                        </div>
+                        <div
+                            className="flex items-center justify-between gap-5 text-wrap rounded-[8px] p-4"
+                            style={{
+                                border: "1px solid rgba(255, 255, 255, 0.05)",
+                            }}
+                        >
+                            <p
+                                className="text-[14px] text-muted-foreground"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                Salary Range Estimate
+                            </p>
+                            <p
+                                className="font-medium text-[14px]"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                {aiAnalysis.salary_range_estimate}
+                            </p>
+                        </div>
+                        <div
+                            className="flex items-center justify-between gap-5 text-wrap rounded-[8px] p-4"
+                            style={{
+                                border: "1px solid rgba(255, 255, 255, 0.05)",
+                            }}
+                        >
+                            <p
+                                className="text-[14px] text-muted-foreground"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                Skills Match Score
+                            </p>
+                            <p
+                                className="font-medium text-[14px]"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                {aiAnalysis.skills_match_score}
+                            </p>
+                        </div>
+                        <div
+                            className="flex items-center justify-between gap-5 text-wrap rounded-[8px] p-4"
+                            style={{
+                                border: "1px solid rgba(255, 255, 255, 0.05)",
+                            }}
+                        >
+                            <p
+                                className="text-[14px] text-muted-foreground"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                Tech Stack Relevance Score
+                            </p>
+                            <p
+                                className="font-medium text-[14px]"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                {aiAnalysis.tech_stack_relevance_score}
+                            </p>
+                        </div>
+                        <div
+                            className="flex items-center justify-between gap-5 text-wrap rounded-[8px] p-4"
+                            style={{
+                                border: "1px solid rgba(255, 255, 255, 0.05)",
+                            }}
+                        >
+                            <p
+                                className="text-[14px] text-muted-foreground"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                Summary
+                            </p>
+                            <p
+                                className="font-medium text-[14px]"
+                                style={{ lineHeight: "143%" }}
+                            >
+                                {aiAnalysis.summary}
+                            </p>
+                        </div>
+                    </div>
+                ) : (
+                    <p>AI not provide any info</p>
+                )}
             </div>
             <div
                 className="w-full md:w-1/3 rounded-[8px] p-8 bg-card"
