@@ -5,14 +5,11 @@ export async function GET(request: NextRequest) {
 
     const areaId = searchParams.get("areaId") || "";
 
-    const hhUrl = new URL(`https://api.hh.ru/areas${areaId}`);
+    const hhUrl = new URL(`https://api.hh.ru/areas/${areaId}`);
     try {
         const response = await fetch(hhUrl.toString(), {
             headers: {
                 "User-Agent": "HHVisorDev/1.0 (nbikiti@bk.com)",
-            },
-            next: {
-                revalidate: 60 * 60 * 24 * 31,
             },
         });
 
