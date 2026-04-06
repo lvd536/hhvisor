@@ -61,11 +61,11 @@ export const useJobStore = create<JobStore>((set, get) => ({
     keywords: [...DEFAULT_KEYWORDS],
     setKeywords: (keywords) => set({ keywords }),
     fetchVacancies: async (area, filters) => {
-        const store = get();
+        const { query, page } = get();
         set({ isLoading: true, error: null });
         try {
             const params = new URLSearchParams();
-            params.append("text", store.query);
+            params.append("text", query);
 
             filters?.experience.forEach((exp) =>
                 params.append("experience", exp),
@@ -85,7 +85,7 @@ export const useJobStore = create<JobStore>((set, get) => ({
                 params.append("area", area.toString());
             }
 
-            params.append("page", store.page.toString());
+            params.append("page", page.toString());
             params.append("per_page", "50");
 
             const res = await fetch(`/api/hh/vacancies?${params.toString()}`);
@@ -97,7 +97,7 @@ export const useJobStore = create<JobStore>((set, get) => ({
             set({
                 vacancies: data.items ?? [],
                 isLoading: false,
-                hasMorePages: data.pages > store.page,
+                hasMorePages: data.pages > page,
                 page: data.page ?? 0,
                 pages: data.pages ?? 0,
             });

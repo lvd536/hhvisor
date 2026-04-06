@@ -1,5 +1,5 @@
 import { useAreaStore } from "@/stores/useAreaStore";
-import { useFilterStore } from "@/stores/useFilterStore";
+import { IFilterStore, useFilterStore } from "@/stores/useFilterStore";
 import { useJobStore } from "@/stores/useJobStore";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
@@ -7,7 +7,6 @@ import { useShallow } from "zustand/react/shallow";
 
 export function useMarketDiscovery() {
     const params = useSearchParams();
-
     const {
         hasMorePages,
         page,
@@ -17,30 +16,43 @@ export function useMarketDiscovery() {
         query,
         setQuery,
         setPage,
-    } = useJobStore();
+    } = useJobStore(
+        useShallow((s) => ({
+            hasMorePages: s.hasMorePages,
+            page: s.page,
+            pages: s.pages,
+            fetchVacancies: s.fetchVacancies,
+            vacancies: s.vacancies,
+            query: s.query,
+            setQuery: s.setQuery,
+            setPage: s.setPage,
+        })),
+    );
 
     const filters = useFilterStore(
         useShallow((s) => ({
             experience: s.experience,
             workFormat: s.workFormat,
             salary: s.salary,
-            setExperience: s.setExperience,
-            setSalary: s.setSalary,
-            setWorkFormat: s.setWorkFormat,
         })),
     );
 
     const { areas, currentArea, setCurrentArea } = useAreaStore();
 
     useEffect(() => {
-        const timeout = setTimeout(async () => {
-            const pageParam = params.get("page") ?? "0";
-            setPage(Number(pageParam));
-            await fetchVacancies(currentArea, filters);
-        }, 300);
+        fetchVacancies(currentArea, filters as IFilterStore);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            const pageParam = Number(params.get("page") ?? "0");
+            setPage(pageParam);
+            fetchVacancies(currentArea, filters as IFilterStore);
+        }, 300);
         return () => clearTimeout(timeout);
-    }, [params, currentArea, filters, fetchVacancies, setPage]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentArea, filters, query, params]);
 
     return {
         hasMorePages,

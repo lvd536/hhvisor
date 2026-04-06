@@ -67,7 +67,7 @@ export default function MarketDiscoverySearchBar({
                 <SelectContent>
                     <SelectItem value="all">None</SelectItem>
 
-                    {areas?.length > 0 &&
+                    {areas && areas.length > 0 &&
                         areas.map((area) => (
                             <SelectGroup key={area.id}>
                                 <SelectLabel>{area.name}</SelectLabel>
