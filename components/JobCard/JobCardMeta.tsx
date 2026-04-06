@@ -45,13 +45,14 @@ export default function JobCardMeta({ vacancy }: IProps) {
                     {vacancy.salary.currency && (
                         <p>{vacancy.salary.currency}</p>
                     )}
-                    {vacancy.salary.from && (
+                    {vacancy.salary.from && <p>{vacancy.salary.from}</p>}
+                    {vacancy.salary.to && (
                         <>
-                            <p>{vacancy.salary.from}</p>
+                            {" "}
                             <p>-</p>
+                            <p>{vacancy.salary.to}</p>
                         </>
                     )}
-                    {vacancy.salary.to && <p>{vacancy.salary.to}</p>}
                 </div>
             ) : (
                 <p className="font-medium text-muted-foreground">
