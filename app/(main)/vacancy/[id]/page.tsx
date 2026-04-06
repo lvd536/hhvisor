@@ -41,9 +41,9 @@ export default async function VacancyPage({ params }: IProps) {
     const employer = (await res.json()) as IDetailedEmployer;
 
     return (
-        <div className="flex w-full h-full items-start gap-4 justify-between my-8 container mx-auto">
+        <div className="flex max-md:flex-col w-full h-full items-start gap-4 justify-between my-8 container mx-auto">
             <BackButton />
-            <div className="w-2/3">
+            <div className="w-full md:w-2/3">
                 <h1 className="font-black text-2xl leading-normal tracking-tighter mb-4">
                     {vacancy.name}
                 </h1>
@@ -136,7 +136,7 @@ export default async function VacancyPage({ params }: IProps) {
                 </div>
             </div>
             <div
-                className="w-1/3 rounded-[8px] p-8 bg-card"
+                className="w-full md:w-1/3 rounded-[8px] p-8 bg-card"
                 style={{
                     border: "1px solid rgba(255, 255, 255, 0.05)",
                 }}
@@ -168,10 +168,11 @@ export default async function VacancyPage({ params }: IProps) {
                                 width={48}
                                 height={48}
                                 alt="Employer logo"
+                                className="shrink-0"
                                 unoptimized
                             />
                         ) : (
-                            <p className="w-12 h-12 rounded-[4px] bg-primary flex items-center justify-center">
+                            <p className="shrink-0 w-12 h-12 rounded-[4px] bg-primary flex items-center justify-center">
                                 I
                             </p>
                         )}
@@ -181,7 +182,7 @@ export default async function VacancyPage({ params }: IProps) {
                                 {employer.name}
                             </p>
                             <div
-                                className="flex gap-2 font-medium text-[12px] tracking-widest uppercase text-muted-foreground"
+                                className="flex gap-2 font-medium text-[11px] tracking-widest uppercase text-muted-foreground text-wrap"
                                 style={{ lineHeight: "133%" }}
                             >
                                 <p
