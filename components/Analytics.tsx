@@ -1,3 +1,4 @@
+"use client";
 import { Command, Table2 } from "lucide-react";
 
 import {

@@ -1,5 +1,6 @@
 "use client";
 
+import MainNav from "@/components/MainNav";
 import { useAreaStore } from "@/stores/useAreaStore";
 import { useJobStore } from "@/stores/useJobStore";
 import { useEffect } from "react";
@@ -17,5 +18,10 @@ export default function MainLayout({
         initAreas();
     }, []);
 
-    return <>{children}</>;
+    return (
+        <div className="flex flex-col items-center">
+            <MainNav />
+            {children}
+        </div>
+    );
 }

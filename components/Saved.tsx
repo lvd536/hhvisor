@@ -1,3 +1,4 @@
+"use client";
 import { useSavedStore } from "@/stores/useSavedStore";
 import JobCard from "./JobCard/JobCard";
 
