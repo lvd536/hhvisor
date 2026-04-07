@@ -9,7 +9,7 @@ interface IProps {
 
 export default function JobCard({ vacancy }: IProps) {
     return (
-        <div className="flex justify-between w-full min-h-51 bg-card rounded-[8px] p-8">
+        <div className="flex max-md:flex-col justify-between w-full min-h-51 bg-card rounded-[8px] p-8">
             <div className="flex flex-col gap-2">
                 <p
                     className="font-semibold text-[12px] text-[#64748b]"

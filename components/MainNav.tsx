@@ -13,7 +13,7 @@ export default function MainNav() {
     const pathname = usePathname();
 
     return (
-        <div className="w-full grid grid-cols-3 items-center md:px-10 min-h-10 nav-shadow container mx-auto z-99">
+        <div className="w-full flex max-md:justify-between md:grid md:grid-cols-3 items-center md:px-10 min-h-10 nav-shadow container mx-auto">
             <p className="font-black text-xl">HH Visor</p>
             <div className="flex justify-center gap-2">
                 {items.map((item) => {
@@ -37,7 +37,7 @@ export default function MainNav() {
                     );
                 })}
             </div>
-            <div />
+            <div className="max-md:hidden" />
         </div>
     );
 }

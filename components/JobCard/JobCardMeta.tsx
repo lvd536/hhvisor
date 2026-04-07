@@ -22,7 +22,7 @@ export default function JobCardMeta({ vacancy }: IProps) {
                 </p>
             </div>
             {vacancy.work_format && (
-                <div className="flex flex-wrap gap-1 items-center ml-4.5">
+                <div className="flex flex-wrap gap-1 items-center md:ml-4.5">
                     <Clock
                         width={19}
                         height={18}
@@ -40,7 +40,7 @@ export default function JobCardMeta({ vacancy }: IProps) {
                 </div>
             )}
             {vacancy.salary ? (
-                <div className="flex gap-1 items-center font-bold ml-4">
+                <div className="flex gap-1 items-center font-bold md:ml-4">
                     <Banknote width={19} height={18} />
                     {vacancy.salary.currency && (
                         <p>{vacancy.salary.currency}</p>
